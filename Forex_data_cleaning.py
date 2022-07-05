@@ -66,8 +66,6 @@ Rates['SMA_position'] = Rates['SMA_position'].astype(int)
 Rates['SMA_position'] = Rates['SMA_position'].str.replace('0', 'SHORT')
 Rates['SMA_position'] = Rates['SMA_position'].str.replace('1', 'LONG')
 
-###Creating a column "size of profit" where the value increases by 1 each consecutive row depending on if the value in sma_position is the same as it was in the previous row###
-
 for i in range(len(Rates)):
     if i == 0:
         Rates.loc[i, 'size_of_profit'] = 0
@@ -76,15 +74,18 @@ for i in range(len(Rates)):
             Rates.loc[i, 'size_of_profit'] = Rates.loc[i-1, 'size_of_profit'] + 1
         else:
             Rates.loc[i, 'size_of_profit'] = 0
-
-
-### Where "size_of_profit" is 0, create a new column with the value of the current row's close price minus the close price the last time a row had size_of_profit == 0 ###
-Rates['size_of_profit_value'] = 0
-Rates.loc[Rates.size_of_profit == 0, 'size_of_profit_value'] = Rates.close - Rates.close.shift(1)
-### Where "size_of_profit" is 1, create a new column where the value of the current row's close price minus the close price the last time a row had size_of_profit == 1 ###
-Rates['size_of_profit_value'] = 0
-Rates.loc[Rates.size_of_profit == 1, 'size_of_profit_value'] = Rates.close - Rates.close.shift(1)
-
+k = 0
+for i in range(len(Rates)):
+    if i == 0:
+        Rates.loc[i, 'size_of_profit_value'] = 0
+    else:
+        if Rates.loc[i, 'size_of_profit'] == 0:
+            Rates.loc[i, 'size_of_profit_value'] = Rates.loc[i, 'close'] - Rates.loc[k, 'close']
+            k = i
+        else:
+            # Rates.loc[i, 'size_of_profit_value'] = Rates.loc[i, 'close'] - Rates.loc[k, 'close']
+            Rates.loc[i, 'size_of_profit_value'] = Rates.loc[i, 'close'] - Rates.loc[k, 'close']
 
 print(Rates.columns)
-print(Rates.sort_values(by='size_of_profit', ascending=True).tail(100))
+#The following print shows the best rallies for the given timeframe
+print(Rates.sort_values(by='size_of_profit_value', ascending=True).tail(100))
